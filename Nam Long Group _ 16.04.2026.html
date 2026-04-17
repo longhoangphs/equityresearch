@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NLG Equity Research</title>
+  <style>
+    :root{
+      --bg:#f3f7fb; --bg-soft:#eef4fa; --panel:#ffffff; --panel-2:#f8fbff; --text:#0f172a; --muted:#52627a;
+      --line:#d9e4f0; --line-2:#ebf1f7; --primary:#2563eb; --primary-2:#60a5fa; --green:#16a34a; --red:#dc2626;
+      --amber:#d97706; --shadow:0 16px 40px rgba(15,23,42,.08); --shadow-soft:0 10px 24px rgba(15,23,42,.05);
+      --radius:22px; --radius-sm:16px;
+    }
+    body.dark{
+      --bg:#07111d; --bg-soft:#0b1627; --panel:#0f1b2d; --panel-2:#142338; --text:#eef4ff; --muted:#9db0c8;
+      --line:#22344c; --line-2:#1a2a40; --primary:#60a5fa; --primary-2:#93c5fd; --green:#22c55e; --red:#ef4444;
+      --amber:#f59e0b; --shadow:0 20px 60px rgba(0,0,0,.35); --shadow-soft:0 12px 30px rgba(0,0,0,.24);
+    }
+    *{box-sizing:border-box} html{scroll-behavior:smooth}
+    body{margin:0; font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:linear-gradient(180deg,var(--bg) 0%, var(--bg-soft) 100%); color:var(--text); transition:.25s ease}
+    .container{width:min(1380px, calc(100vw - 28px)); margin:18px auto 46px}
+    .hero,.card{background:var(--panel); border:1px solid var(--line); box-shadow:var(--shadow-soft); border-radius:var(--radius)}
+    .hero{position:relative; overflow:hidden; padding:30px}
+    .hero:before,.hero:after{content:""; position:absolute; border-radius:50%; pointer-events:none}
+    .hero:before{width:380px;height:380px; right:-130px; top:-110px; background:radial-gradient(circle, rgba(37,99,235,.14), transparent 65%)}
+    .hero:after{width:320px;height:320px; left:-110px; bottom:-130px; background:radial-gradient(circle, rgba(22,163,74,.10), transparent 66%)}
+    .topbar{display:flex; justify-content:space-between; gap:12px; align-items:flex-start; flex-wrap:wrap}
+    .eyebrow{display:inline-flex; align-items:center; gap:10px; padding:10px 14px; background:var(--panel-2); border:1px solid var(--line); border-radius:999px; font-size:13px; color:var(--muted)}
+    .dot{width:8px;height:8px;border-radius:50%;background:var(--green); box-shadow:0 0 14px rgba(34,197,94,.8)}
+    .actions{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .btn{border:1px solid var(--line); background:var(--panel-2); color:var(--text); padding:10px 14px; border-radius:999px; font-weight:700; cursor:pointer}
+    .btn.primary{background:linear-gradient(135deg,var(--primary),var(--primary-2)); color:white; border-color:transparent}
+    h1{margin:16px 0 12px; font-size:clamp(34px,5.4vw,62px); line-height:1.02; letter-spacing:-.045em}
+    .subtitle{max-width:920px; color:var(--muted); line-height:1.75; margin:0}
+    .hero-grid,.grid-4,.grid-3,.grid-2{display:grid; gap:18px}
+    .hero-grid{grid-template-columns:1.45fr .95fr; margin-top:22px}
+    .grid-4{grid-template-columns:repeat(4,1fr)} .grid-3{grid-template-columns:repeat(3,1fr)} .grid-2{grid-template-columns:repeat(2,1fr)}
+    .card{padding:20px}
+    .section-title{font-size:24px; margin:28px 0 16px; letter-spacing:-.03em}
+    .subheading{font-size:18px; margin:0 0 12px; letter-spacing:-.02em}
+    .muted{color:var(--muted)} .small{font-size:12px; color:var(--muted)} .tiny{font-size:11px; color:var(--muted)}
+    .pill-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:14px}
+    .pill{padding:10px 12px; border-radius:999px; background:var(--panel-2); border:1px solid var(--line); color:var(--muted); font-size:13px}
+    .rating-band{display:grid; grid-template-columns:1.2fr .8fr; gap:16px}
+    .metric-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:12px}
+    .metric{padding:16px; background:var(--panel-2); border:1px solid var(--line); border-radius:18px}
+    .metric .label{font-size:12px; color:var(--muted); margin-bottom:6px}
+    .metric .value{font-size:30px; font-weight:800; letter-spacing:-.04em}
+    .metric .sub{margin-top:5px; font-size:12px; color:var(--muted)}
+    .buy-card{display:flex; flex-direction:column; justify-content:space-between; min-height:100%}
+    .target-box{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:14px}
+    .target{padding:16px; background:var(--panel-2); border:1px solid var(--line); border-radius:18px}
+    .target .n{font-size:28px; font-weight:800; letter-spacing:-.04em; margin-top:4px}
+    .target.buy{background:linear-gradient(135deg, rgba(22,163,74,.10), rgba(37,99,235,.08))}
+    .up{color:var(--green)} .down{color:var(--red)} .flat{color:var(--amber)}
+    .list{display:grid; gap:14px}
+    .list-item{display:grid; grid-template-columns:56px 1fr; gap:14px; align-items:flex-start; padding:14px 0; border-top:1px solid var(--line)}
+    .list-item:first-child{padding-top:0; border-top:0}
+    .icon{width:52px;height:52px;border-radius:16px; display:grid; place-items:center; font-size:22px; background:linear-gradient(135deg, rgba(37,99,235,.12), rgba(22,163,74,.08)); border:1px solid var(--line)}
+    .list-item p{margin:5px 0 0; color:var(--muted); line-height:1.7}
+    .kpi-strip{display:grid; grid-template-columns:repeat(5,1fr); gap:12px}
+    .kpi{padding:16px; background:var(--panel); border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow-soft)}
+    .kpi .num{font-size:26px; font-weight:800; letter-spacing:-.04em; margin-top:4px}
+    .table-wrap{overflow:auto}
+    table{width:100%; border-collapse:collapse; border:1px solid var(--line); border-radius:18px; overflow:hidden; background:var(--panel-2)}
+    th,td{padding:14px; border-bottom:1px solid var(--line); text-align:left; font-size:14px}
+    th{background:rgba(37,99,235,.06); color:var(--text)} td{color:var(--muted)} tr:last-child td{border-bottom:0}
+    .tag{display:inline-flex; align-items:center; gap:6px; padding:7px 10px; border-radius:999px; border:1px solid var(--line); background:var(--panel-2); font-size:12px; font-weight:700}
+    .tag.green{color:var(--green)} .tag.red{color:var(--red)} .tag.amber{color:var(--amber)}
+    .charts{display:grid; grid-template-columns:1.15fr .85fr; gap:18px}
+    .chart-box{padding:12px 0 0}
+    svg{width:100%; height:auto; display:block}
+    .legend{display:flex; gap:14px; flex-wrap:wrap; margin-top:10px}
+    .legend span{display:inline-flex; gap:8px; align-items:center; color:var(--muted); font-size:12px}
+    .legend i{width:11px;height:11px;border-radius:50%; display:inline-block}
+    .scenario-tabs{display:flex; gap:10px; flex-wrap:wrap}
+    .scenario-btn{padding:10px 14px; border-radius:999px; border:1px solid var(--line); background:var(--panel-2); color:var(--text); font-weight:700; cursor:pointer}
+    .scenario-btn.active{background:linear-gradient(135deg,var(--primary),var(--primary-2)); color:white; border-color:transparent}
+    .scenario-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:14px}
+    .scenario-card{padding:16px; border-radius:18px; background:var(--panel-2); border:1px solid var(--line)}
+    .bridge{display:grid; gap:12px; margin-top:12px}
+    .bridge-row{display:grid; grid-template-columns:180px 1fr 90px; gap:12px; align-items:center}
+    .bar-bg{height:16px; border-radius:999px; background:var(--bg-soft); border:1px solid var(--line); overflow:hidden}
+    .bar-fill{height:100%; border-radius:999px; background:linear-gradient(90deg,var(--primary),var(--primary-2))}
+    .bar-fill.green{background:linear-gradient(90deg,var(--green),#4ade80)} .bar-fill.red{background:linear-gradient(90deg,var(--red),#fb7185)} .bar-fill.amber{background:linear-gradient(90deg,var(--amber),#fbbf24)}
+    .timeline{display:grid; gap:12px}
+    .t-item{display:grid; grid-template-columns:90px 1fr; gap:12px; align-items:start}
+    .t-date{padding:10px 12px; border-radius:14px; background:var(--panel-2); border:1px solid var(--line); font-weight:800; text-align:center}
+    .t-content{padding:14px; border-radius:16px; background:var(--panel-2); border:1px solid var(--line)}
+    .footer{margin-top:18px; padding:18px 20px; border-radius:18px; background:var(--panel); border:1px solid var(--line); color:var(--muted); line-height:1.7; font-size:13px}
+    @media (max-width:1100px){.hero-grid,.grid-4,.grid-3,.grid-2,.charts,.rating-band,.kpi-strip{grid-template-columns:1fr}.target-box,.scenario-grid{grid-template-columns:1fr}}
+    @media (max-width:760px){.container{width:min(100vw - 14px,1380px)} .bridge-row{grid-template-columns:110px 1fr 72px} .t-item{grid-template-columns:1fr}}
+  
+    .toolbar{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:12px 0 0}
+    .chip{padding:8px 12px; border-radius:999px; border:1px solid var(--line); background:var(--panel-2); color:var(--text); cursor:pointer; font-weight:700; transition:.2s ease}
+    .chip.active,.chip:hover{background:linear-gradient(135deg,var(--primary),var(--primary-2)); color:#fff; border-color:transparent}
+    .chart-card{padding:22px}
+    .chart-meta{display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:flex-start; margin-bottom:10px}
+    .chart-stage{margin-top:14px; background:linear-gradient(180deg,var(--panel-2),transparent); border:1px solid var(--line); border-radius:20px; padding:12px; overflow:hidden}
+    .chart-stage svg{width:100%; height:auto; display:block}
+    .chart-foot{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:12px}
+    .mini-note{padding:12px 14px; border:1px solid var(--line); border-radius:16px; background:var(--panel-2)}
+    .mini-note .k{font-size:12px; color:var(--muted); margin-bottom:6px}
+    .mini-note .v{font-size:18px; font-weight:800}
+    .segmented{display:inline-flex; padding:4px; border:1px solid var(--line); background:var(--panel-2); border-radius:999px; gap:4px}
+    .segmented button{border:none; background:transparent; color:var(--text); padding:8px 12px; border-radius:999px; font-weight:700; cursor:pointer}
+    .segmented button.active{background:linear-gradient(135deg,var(--primary),var(--primary-2)); color:#fff}
+    .range-wrap{display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:12px}
+    input[type="range"]{width:220px; accent-color:var(--primary)}
+    .bubble-wrap{position:relative; height:340px; border:1px solid var(--line); border-radius:20px; background:linear-gradient(180deg,var(--panel-2),transparent); overflow:hidden; margin-top:14px}
+    .bubble-wrap .axis-x,.bubble-wrap .axis-y{position:absolute; background:var(--line)}
+    .bubble-wrap .axis-x{left:54px; right:18px; bottom:42px; height:1px}
+    .bubble-wrap .axis-y{left:54px; top:18px; bottom:42px; width:1px}
+    .bubble-label{position:absolute; font-size:12px; color:var(--muted)}
+    .bubble{position:absolute; border-radius:999px; display:flex; align-items:center; justify-content:center; font-weight:800; color:#fff; box-shadow:var(--shadow-soft); border:2px solid rgba(255,255,255,.7); cursor:default; transition:transform .2s ease, box-shadow .2s ease}
+    .bubble:hover{transform:scale(1.06); box-shadow:var(--shadow)}
+    .bubble.nlg{background:linear-gradient(135deg,var(--primary),var(--primary-2))}
+    .bubble.kdh{background:linear-gradient(135deg,var(--green),#4ade80)}
+    .bubble.dxg{background:linear-gradient(135deg,var(--amber),#fbbf24)}
+    .bubble.nvl{background:linear-gradient(135deg,var(--red),#fb7185)}
+    .bubble-tip{position:absolute; pointer-events:none; padding:8px 10px; background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:12px; font-size:12px; box-shadow:var(--shadow-soft); opacity:0; transform:translateY(6px); transition:.2s ease}
+    .chart-grid-2{display:grid; grid-template-columns:1.2fr .8fr; gap:18px}
+    @media (max-width: 980px){.chart-grid-2{grid-template-columns:1fr}.chart-foot{grid-template-columns:1fr}}
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section class="hero">
+      <div class="topbar">
+        <div class="eyebrow"><span class="dot"></span> HOSE: NLG • Equity Research• Snapshot 16/04/2026</div>
+        <div class="actions">
+          <button class="btn" onclick="toggleTheme()">🌗 Dark / Light</button>
+          <button class="btn primary" onclick="window.print()">🖨️ In / Lưu PDF</button>
+        </div>
+      </div>
+      <h1>Nam Long (NLG)<br/>Recovery play chất lượng cao với optionality từ quỹ đất đô thị</h1>
+      <p class="subtitle">Chất lượng land bank, độ an toàn bảng cân đối, khả năng mở khóa presales giai đoạn 2026–2027 và mức chiết khấu so với RNAV nội bộ. Thesis cốt lõi là NLG không phải câu chuyện tăng trưởng bùng nổ ngay lập tức, nhưng là cổ phiếu bất động sản có profile cân bằng rủi ro/lợi nhuận tốt hơn nhóm developer đòn bẩy cao.</p>
+      <div class="pill-row">
+        <div class="pill">Moat: quỹ đất sạch tích lũy sớm</div>
+        <div class="pill">Chất lượng tài sản: cao hơn mặt bằng ngành</div>
+        <div class="pill">Catalyst: pháp lý, mở bán, bàn giao</div>
+        <div class="pill">Key monitor: presales, backlog, cash conversion</div>
+      </div>
+
+      <div class="hero-grid">
+        <div class="card">
+          <div class="rating-band">
+            <div class="buy-card">
+              <div>
+                <h2 class="subheading">Investment recommendation</h2>
+                <p class="muted" style="margin:0;line-height:1.75">Trong base case, NLG phù hợp với chiến lược tích lũy trung hạn nhờ nền tài chính vững hơn peer, khả năng hồi phục doanh thu 2026 và upside định giá khi các đại dự án bước vào nhịp triển khai rõ hơn.</p>
+              </div>
+              <div class="target-box">
+                <div class="target buy">
+                  <div class="small">Khuyến nghị</div>
+                  <div class="n up">BUY</div>
+                  <div class="small">Trung hạn 12–18 tháng</div>
+                </div>
+                <div class="target">
+                  <div class="small">Target price</div>
+                  <div class="n" id="targetPrice">36.000đ</div>
+                  <div class="small">Base case</div>
+                </div>
+                <div class="target">
+                  <div class="small">Upside</div>
+                  <div class="n up" id="upsidePct">+25,2%</div>
+                  <div class="small">So với giá 28.750đ</div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h2 class="subheading">Market snapshot</h2>
+              <div class="metric-grid">
+                <div class="metric"><div class="label">Giá đóng cửa</div><div class="value">28.750đ</div><div class="sub">16/04/2026</div></div>
+                <div class="metric"><div class="label">Vốn hóa ước tính</div><div class="value">13,95k tỷ</div><div class="sub">485,1 triệu cp</div></div>
+                <div class="metric"><div class="label">1 tháng</div><div class="value up">+3,88%</div><div class="sub">IR Nam Long</div></div>
+                <div class="metric"><div class="label">1 năm</div><div class="value down">-22,84%</div><div class="sub">IR Nam Long</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 class="subheading">3 luận điểm đầu tư trọng yếu</h2>
+          <div class="list">
+            <div class="list-item"><div class="icon">🏙️</div><div><strong>Land bank đủ sâu cho nhiều năm tăng trưởng</strong><p>Waterpoint 355 ha và Izumi 170 ha là hai “core optionality assets”, trong khi Mizuki và Akari tiếp tục đóng vai trò tạo dòng tiền và bàn giao.</p></div></div>
+            <div class="list-item"><div class="icon">🧱</div><div><strong>Bảng cân đối giúp doanh nghiệp đi qua chu kỳ tốt hơn</strong><p>D/E dựa trên nợ phải trả/vốn chủ sở hữu ở mức 0,79x cuối 2025 cho thấy mức đòn bẩy lành mạnh tương đối trong ngành bất động sản dân dụng.</p></div></div>
+            <div class="list-item"><div class="icon">⏳</div><div><strong>Re-rating phụ thuộc vào tiến độ thực thi</strong><p>Thị trường sẽ trả premium cao hơn khi NLG chứng minh được presales, bàn giao và pháp lý đi vào nhịp ổn định trong 2026–2027.</p></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <h2 class="section-title">1. KPI tài chính và sức khỏe bảng cân đối</h2>
+    <div class="kpi-strip">
+      <div class="kpi"><div class="small">Doanh thu thuần 2025</div><div class="num">5.645</div><div class="small">tỷ đồng</div></div>
+      <div class="kpi"><div class="small">LNST cổ đông mẹ 2025</div><div class="num">701</div><div class="small">tỷ đồng</div></div>
+      <div class="kpi"><div class="small">Kế hoạch doanh thu 2026</div><div class="num">7.630</div><div class="small up">+35,2% YoY</div></div>
+      <div class="kpi"><div class="small">Kế hoạch LNST CĐ mẹ 2026</div><div class="num">720</div><div class="small up">+2,7% YoY</div></div>
+      <div class="kpi"><div class="small">Cổ tức tiền mặt 2026</div><div class="num">5%</div><div class="small">Theo kế hoạch ĐHĐCĐ</div></div>
+    </div>
+
+    <div class="grid-3" style="margin-top:18px">
+      <div class="card">
+        <h3 class="subheading">Tài chính cuối 2025</h3>
+        <div class="metric-grid">
+          <div class="metric"><div class="label">Vốn chủ sở hữu</div><div class="value">14.824</div><div class="sub">tỷ đồng</div></div>
+          <div class="metric"><div class="label">Tổng nợ phải trả</div><div class="value">11.740</div><div class="sub">tỷ đồng</div></div>
+          <div class="metric"><div class="label">Nợ vay NH</div><div class="value">1.896</div><div class="sub">tỷ đồng</div></div>
+          <div class="metric"><div class="label">Nợ trái phiếu</div><div class="value">3.626</div><div class="sub">tỷ đồng</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3 class="subheading">Chất lượng thanh khoản</h3>
+        <div class="metric-grid">
+          <div class="metric"><div class="label">Current ratio</div><div class="value">2,98x</div><div class="sub">Khá an toàn</div></div>
+          <div class="metric"><div class="label">Quick ratio</div><div class="value">1,64x</div><div class="sub">Đệm thanh khoản tốt</div></div>
+          <div class="metric"><div class="label">ROA</div><div class="value">3,56%</div><div class="sub">2025</div></div>
+          <div class="metric"><div class="label">ROE</div><div class="value">6,38%</div><div class="sub">2025</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3 class="subheading">Đọc nhanh ý nghĩa</h3>
+        <div class="list">
+          <div class="list-item"><div class="icon">✅</div><div><strong>Balance sheet phòng thủ</strong><p>Đây là điểm giúp NLG khác biệt tương đối với nhiều cổ phiếu BĐS đang bị định giá nặng bởi rủi ro đòn bẩy.</p></div></div>
+          <div class="list-item"><div class="icon">📌</div><div><strong>Lợi nhuận 2026 chưa phản ánh full upside</strong><p>Kế hoạch lợi nhuận tăng nhẹ cho thấy ban lãnh đạo vẫn khá thận trọng, nên upside định giá nằm nhiều ở kỳ vọng 2027 trở đi.</p></div></div>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="section-title">2. Advanced chart center</h2>
+    <div class="chart-grid-2">
+      <div class="card chart-card">
+        <div class="chart-meta">
+          <div>
+            <h3 class="subheading">Financial trend explorer</h3>
+            <div class="small">Đổi giữa doanh thu, lợi nhuận, biên lợi nhuận và các chỉ số thanh khoản để nhìn chu kỳ phục hồi của NLG.</div>
+          </div>
+          <div class="segmented" id="metricTabs">
+            <button class="active" data-metric="revenue">Doanh thu</button>
+            <button data-metric="profit">LNST CĐ mẹ</button>
+            <button data-metric="margin">Net margin</button>
+            <button data-metric="liquidity">Liquidity</button>
+          </div>
+        </div>
+        <div class="chart-stage">
+          <svg id="financialSvg" viewBox="0 0 760 330" aria-label="Financial trend chart"></svg>
+        </div>
+        <div class="chart-foot">
+          <div class="mini-note"><div class="k">Điểm nhấn</div><div class="v" id="finHeadline">2026F doanh thu tăng mạnh</div></div>
+          <div class="mini-note"><div class="k">Theo dõi</div><div class="v" id="finMonitor">Backlog chuyển thành bàn giao</div></div>
+          <div class="mini-note"><div class="k">Hàm ý</div><div class="v" id="finImplication">Pha hồi phục còn ở giai đoạn đầu</div></div>
+        </div>
+      </div>
+
+      <div class="card chart-card">
+        <div class="chart-meta">
+          <div>
+            <h3 class="subheading">RNAV & broker target monitor</h3>
+            <div class="small">Kéo discount RNAV để xem target nội bộ thay đổi, đồng thời so với vùng giá mục tiêu của các CTCK.</div>
+          </div>
+        </div>
+        <div class="range-wrap">
+          <span class="small">RNAV/share: <strong id="rnavShareOut">50.000đ</strong></span>
+          <span class="small">Discount: <strong id="discountOut">28%</strong></span>
+          <input id="discountSlider" type="range" min="10" max="40" value="28" />
+        </div>
+        <div class="chart-stage">
+          <svg id="targetSvg" viewBox="0 0 520 330" aria-label="Target monitor chart"></svg>
+        </div>
+        <div class="mini-note" style="margin-top:12px"><div class="k">Target nội bộ sau discount</div><div class="v" id="impliedTarget">36.000đ</div></div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:18px">
+      <div class="card chart-card">
+        <div class="chart-meta">
+          <div>
+            <h3 class="subheading">Scenario ladder</h3>
+            <div class="small">Chuyển kịch bản để xem vùng định giá, upside và luận điểm thay đổi theo tốc độ thực thi.</div>
+          </div>
+          <div class="scenario-tabs">
+            <button class="scenario-btn active" data-s="bear" onclick="setScenario('bear')">Bear</button>
+            <button class="scenario-btn" data-s="base" onclick="setScenario('base')">Base</button>
+            <button class="scenario-btn" data-s="bull" onclick="setScenario('bull')">Bull</button>
+          </div>
+        </div>
+        <div class="scenario-grid">
+          <div class="scenario-card"><div class="small">RNAV/share</div><div class="metric" style="margin-top:10px"><div class="value" id="scRnav">42.000đ</div><div class="sub" id="scNote">Kịch bản thận trọng</div></div></div>
+          <div class="scenario-card"><div class="small">Target price</div><div class="metric" style="margin-top:10px"><div class="value" id="scTarget">30.000đ</div><div class="sub" id="scUpside">+4,3% so với thị giá</div></div></div>
+        </div>
+        <div class="chart-stage">
+          <svg id="scenarioSvg" viewBox="0 0 600 260" aria-label="Scenario ladder chart"></svg>
+        </div>
+      </div>
+
+      <div class="card chart-card">
+        <div class="chart-meta">
+          <div>
+            <h3 class="subheading">Peer risk / reward map</h3>
+            <div class="small">Trục X là upside định giá, trục Y là chất lượng bảng cân đối. Kích thước bubble biểu thị mức độ optionality tài sản.</div>
+          </div>
+        </div>
+        <div class="bubble-wrap" id="peerMap">
+          <div class="axis-x"></div><div class="axis-y"></div>
+          <div class="bubble-label" style="left:20px; top:18px">Balance sheet tốt hơn</div>
+          <div class="bubble-label" style="right:18px; bottom:16px">Upside định giá cao hơn →</div>
+          <div class="bubble-label" style="left:20px; bottom:16px">0%</div>
+          <div class="bubble-label" style="left:54px; bottom:16px">10%</div>
+          <div class="bubble-label" style="left:170px; bottom:16px">20%</div>
+          <div class="bubble-label" style="left:286px; bottom:16px">30%</div>
+          <div class="bubble-label" style="left:402px; bottom:16px">40%</div>
+          <div class="bubble-tip" id="bubbleTip"></div>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="section-title">3. Dự án trọng điểm và optionality tài sản</h2>
+    <div class="grid-2">
+      <div class="card table-wrap">
+        <h3 class="subheading">Dự án trọng điểm</h3>
+        <table>
+          <thead><tr><th>Dự án</th><th>Quy mô</th><th>Vai trò</th><th>Nhận định</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Waterpoint</strong></td><td>355 ha</td><td>Core NAV</td><td>Tài sản chiến lược dài hạn, quyết định mức premium RNAV nếu triển khai nhanh.</td></tr>
+            <tr><td><strong>Izumi City</strong></td><td>170 ha</td><td>Growth option</td><td>Optionality lớn cho giai đoạn 2026–2028, đặc biệt khi pháp lý và mở bán rõ hơn.</td></tr>
+            <tr><td><strong>Mizuki Park</strong></td><td>26 ha</td><td>Cash flow</td><td>Tiếp tục hỗ trợ doanh thu, bàn giao và nhận diện thương hiệu.</td></tr>
+            <tr><td><strong>Akari City</strong></td><td>8,5 ha</td><td>Near-term earnings</td><td>Đóng góp ngắn hạn hơn nhờ mức độ hoàn thiện cao hơn.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <h3 class="subheading">Asset quality scorecard</h3>
+        <div class="grid-2">
+          <div class="metric"><div class="label">Land bank depth</div><div class="value">8,8/10</div><div class="sub">Đủ cho nhiều năm</div></div>
+          <div class="metric"><div class="label">Balance sheet</div><div class="value">8,2/10</div><div class="sub">An toàn tương đối</div></div>
+          <div class="metric"><div class="label">Execution visibility</div><div class="value">6,9/10</div><div class="sub">Cần thêm catalyst</div></div>
+          <div class="metric"><div class="label">Valuation appeal</div><div class="value">7,8/10</div><div class="sub">Có discount hợp lý</div></div>
+        </div>
+        <div style="margin-top:14px" class="list">
+          <div class="list-item"><div class="icon">🤝</div><div><strong>JV với đối tác Nhật là lợi thế mềm</strong><p>Nâng chuẩn phát triển dự án, kiểm soát chất lượng sản phẩm và giảm bớt áp lực vốn ở từng giai đoạn.</p></div></div>
+          <div class="list-item"><div class="icon">🏘️</div><div><strong>Phân khúc vừa túi tiền tạo nền cầu thật</strong><p>Điểm này giúp NLG có cơ hội hồi phục bền hơn so với các doanh nghiệp phụ thuộc nặng vào phân khúc cao cấp.</p></div></div>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="section-title">4. Peer comparison</h2>
+    <div class="card table-wrap">
+      <table>
+        <thead>
+          <tr><th>Mã</th><th>Giá tham chiếu 16/04/2026</th><th>Đặc điểm chính</th><th>Đòn bẩy tương đối</th><th>Góc nhìn chiến lược</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>NLG</strong></td><td>28.750đ</td><td>Land bank tốt, JV Nhật, profile cân bằng</td><td><span class="tag green">Thấp - vừa</span></td><td>Phù hợp tích lũy theo chu kỳ hồi phục</td></tr>
+          <tr><td><strong>KDH</strong></td><td>26.300đ</td><td>Tài sản tốt, thiên về premium hơn</td><td><span class="tag green">Thấp</span></td><td>Thường được thị trường định giá premium</td></tr>
+          <tr><td><strong>DXG</strong></td><td>15.150đ</td><td>Nhạy chu kỳ hơn, upside lớn hơn nhưng biến động cao</td><td><span class="tag amber">Trung bình</span></td><td>Hợp với khẩu vị beta cao</td></tr>
+          <tr><td><strong>NVL</strong></td><td>17.000đ</td><td>Câu chuyện tái cấu trúc và pháp lý</td><td><span class="tag red">Cao</span></td><td>Rủi ro cao, phụ thuộc xử lý bảng cân đối</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="section-title">5. Tổng hợp khuyến nghị từ các công ty chứng khoán</h2>
+    <div class="grid-2">
+      <div class="card table-wrap">
+        <h3 class="subheading">Snapshot báo cáo khuyến nghị</h3>
+        <table>
+          <thead>
+            <tr><th>Tổ chức</th><th>Ngày báo cáo</th><th>Khuyến nghị</th><th>Giá mục tiêu</th><th>Điểm nhấn luận điểm</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>DSC / VDSC</strong></td><td>06/04/2026</td><td><span class="tag green">BUY</span></td><td>37.100đ</td><td>Kỳ vọng backlog tích lũy 2024–2025 hỗ trợ bàn giao mạnh hơn từ 2027.</td></tr>
+            <tr><td><strong>Vietcap</strong></td><td>09/03/2026</td><td><span class="tag green">BUY</span></td><td>45.800đ</td><td>Backlog mạnh, định giá hấp dẫn nhưng giả định dự án được làm thận trọng hơn.</td></tr>
+            <tr><td><strong>BSC</strong></td><td>01/10/2025</td><td><span class="tag green">MUA</span></td><td>50.100đ</td><td>Nhấn mạnh vai trò các đại dự án và nguồn vốn cho giai đoạn triển khai tiếp theo.</td></tr>
+            <tr><td><strong>Shinhan Securities</strong></td><td>18/08/2025</td><td><span class="tag green">Tích cực</span></td><td>49.100đ</td><td>Động lực từ Waterpoint Southgate và kế hoạch chuyển nhượng thêm tại Izumi.</td></tr>
+            <tr><td><strong>MBS</strong></td><td>11/08/2025</td><td><span class="tag amber">Trung lập</span></td><td>45.600đ</td><td>Giá mục tiêu tăng nhưng khuyến nghị hạ do thị giá đã phản ánh một phần kỳ vọng.</td></tr>
+            <tr><td><strong>MASVN</strong></td><td>26/06/2025</td><td><span class="tag green">Trading Buy</span></td><td>42.800đ</td><td>Hưởng lợi từ tín hiệu hồi phục thị trường và catalyst pháp lý của Izumi.</td></tr>
+            <tr><td><strong>NHSV</strong></td><td>14/11/2025</td><td><span class="tag amber">Khả quan</span></td><td>45.000đ</td><td>Kỳ vọng doanh số bán hàng cải thiện giai đoạn 2025–2026 theo dự án.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <h3 class="subheading">Consensus nhanh</h3>
+        <div class="grid-2">
+          <div class="metric"><div class="label">Thiên hướng chung</div><div class="value">Tích cực</div><div class="sub">Đa số nghiêng về Mua / Buy</div></div>
+          <div class="metric"><div class="label">Khoảng giá mục tiêu</div><div class="value">37,1k–50,1k</div><div class="sub">Theo snapshot báo cáo công khai</div></div>
+          <div class="metric"><div class="label">Median target</div><div class="value">45,6k</div><div class="sub">Gần vùng Vietcap/MBS/NHSV</div></div>
+          <div class="metric"><div class="label">Luận điểm chính</div><div class="value">Backlog + pháp lý</div><div class="sub">Izumi, Waterpoint, bàn giao 2027</div></div>
+        </div>
+        <div style="margin-top:14px" class="list">
+          <div class="list-item"><div class="icon">🧭</div><div><strong>Cách đọc block này</strong><p>Đây là tổng hợp nhanh các báo cáo công khai để tham khảo góc nhìn thị trường. Mức giá mục tiêu khác nhau do thời điểm phát hành, giả định RNAV, discount rate và tiến độ pháp lý từng tổ chức.</p></div></div>
+          <div class="list-item"><div class="icon">📝</div><div><strong>Lưu ý phân tích</strong><p>Báo cáo mới hơn thường đã phản ánh bối cảnh 2026 tốt hơn, nhưng mức mục tiêu thấp hơn chưa chắc là tiêu cực hơn; có thể chỉ do giả định thận trọng hơn về presales, thời gian bàn giao hoặc chiết khấu RNAV.</p></div></div>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="section-title">6. Catalyst timeline 2026–2027</h2>
+    <div class="card timeline">
+      <div class="t-item"><div class="t-date">Q2/2026</div><div class="t-content"><strong>Định hình kỳ vọng mới sau ĐHĐCĐ</strong><div class="muted" style="margin-top:6px">Thị trường sẽ đánh giá mức độ khả thi của kế hoạch doanh thu 7.630 tỷ đồng và LNST cổ đông mẹ 720 tỷ đồng.</div></div></div>
+      <div class="t-item"><div class="t-date">H2/2026</div><div class="t-content"><strong>Mở bán / pháp lý là catalyst mạnh nhất</strong><div class="muted" style="margin-top:6px">Bất kỳ tín hiệu rõ hơn ở Waterpoint, Izumi hoặc tốc độ hấp thụ tại các dự án hiện hữu đều có thể kéo discount RNAV hẹp lại.</div></div></div>
+      <div class="t-item"><div class="t-date">2027</div><div class="t-content"><strong>Kiểm định pha tăng trưởng mới</strong><div class="muted" style="margin-top:6px">Nếu doanh nghiệp chuyển đổi thành công từ nền tích lũy 2026 sang pha tăng presales và bàn giao, valuation có thể re-rate đáng kể.</div></div></div>
+    </div>
+
+    <div class="grid-2" style="margin-top:18px">
+      <div class="card">
+        <h3 class="subheading">Catalyst tích cực</h3>
+        <div class="list">
+          <div class="list-item"><div class="icon">📈</div><div><strong>Thị trường nhà ở phục hồi rõ hơn</strong><p>Lãi suất ổn định và tâm lý mua nhà cải thiện sẽ hỗ trợ tốc độ hấp thụ sản phẩm.</p></div></div>
+          <div class="list-item"><div class="icon">🧩</div><div><strong>Tháo gỡ pháp lý tại đại dự án</strong><p>Đây là biến số có thể thay đổi rất nhanh cách thị trường định giá NLG.</p></div></div>
+          <div class="list-item"><div class="icon">💵</div><div><strong>Cash conversion tốt hơn dự kiến</strong><p>Khi bàn giao và thu tiền được cải thiện, premium valuation sẽ bền vững hơn.</p></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3 class="subheading">Rủi ro đầu tư</h3>
+        <div class="list">
+          <div class="list-item"><div class="icon">⚠️</div><div><strong>Pháp lý chậm hơn kỳ vọng</strong><p>Kéo dài thời gian thương mại hóa land bank và khiến discount RNAV giữ ở mức cao.</p></div></div>
+          <div class="list-item"><div class="icon">🏚️</div><div><strong>Thanh khoản thị trường hồi phục chậm</strong><p>Presales yếu sẽ làm doanh thu và lợi nhuận 2027 thấp hơn kỳ vọng hiện tại.</p></div></div>
+          <div class="list-item"><div class="icon">📉</div><div><strong>Định giá hấp dẫn nhưng chưa đủ catalyst</strong><p>Cổ phiếu có thể đi ngang kéo dài nếu thiếu tín hiệu xác nhận từ thực thi.</p></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <strong>Lưu ý:</strong> Đây là dashboard nghiên cứu đầu tư phục vụ trình bày và thảo luận. Block RNAV và target price là mô hình nội bộ minh họa dựa trên dữ liệu công bố công khai của doanh nghiệp và giả định phân tích, không phải khuyến nghị đầu tư chính thức từ tổ chức môi giới. Dữ liệu nền sử dụng snapshot công bố 2025–2026 gồm IR Nam Long, tài liệu ĐHĐCĐ 2026 và công bố tình hình tài chính cuối 2025.
+    </div>
+  </div>
+
+  <script>
+    const scenarios = {
+      bear: { target: 30000, rnav: 42000, upside: '+4,3% so với thị giá', note: 'Kịch bản thận trọng: mở bán và pháp lý chậm' },
+      base: { target: 36000, rnav: 50000, upside: '+25,2% so với thị giá', note: 'Kịch bản cơ sở: thực thi đúng kế hoạch 2026' },
+      bull: { target: 42000, rnav: 58000, upside: '+46,1% so với thị giá', note: 'Kịch bản tích cực: discount RNAV thu hẹp nhanh' }
+    };
+    const marketPrice = 28750;
+    const fmt = n => new Intl.NumberFormat('vi-VN').format(Math.round(n)) + 'đ';
+    const pct = n => (n>0?'+':'') + n.toFixed(1).replace('.',',') + '%';
+    const financialSeries = {
+      revenue: {label:'Doanh thu (tỷ đồng)', values:[2376, 5645, 7630], years:['2024A','2025A','2026F'], color:'var(--primary)', area:true,
+        notes:['2026F doanh thu tăng mạnh','Bàn giao và mở bán quay lại','Pha hồi phục còn ở giai đoạn đầu']},
+      profit: {label:'LNST CĐ mẹ (tỷ đồng)', values:[518, 701, 720], years:['2024A','2025A','2026F'], color:'var(--green)', area:true,
+        notes:['Lợi nhuận phục hồi nhưng chưa bứt tốc','2026 vẫn là năm bản lề','Upside lớn hơn nằm ở 2027+']},
+      margin: {label:'Net margin (%)', values:[21.8, 12.4, 9.4], years:['2024A','2025A','2026F'], color:'var(--amber)', area:false,
+        notes:['Biên ròng co lại khi mix doanh thu thay đổi','Cần theo dõi chất lượng bàn giao','Re-rating cần đi cùng cash conversion']},
+      liquidity: {label:'Thanh khoản (x)', values:[2.3, 2.98, 1.64], years:['2024A*','Current ratio 2025','Quick ratio 2025'], color:'var(--primary-2)', area:false,
+        notes:['Đệm thanh khoản đang ở vùng an toàn','Balance sheet vẫn là điểm mạnh','Giảm áp lực tài trợ ngắn hạn']}
+    };
+    const brokerTargets = [
+      ['DSC/VDSC',37100],['MASVN',42800],['NHSV',45000],['MBS',45600],['Vietcap',45800],['Shinhan',49100],['BSC',50100]
+    ];
+    const peerData = [
+      {code:'NLG', x:25, y:78, size:58, cls:'nlg', tip:'NLG • upside ~25% • balance sheet tốt • optionality cao'},
+      {code:'KDH', x:18, y:84, size:50, cls:'kdh', tip:'KDH • upside thấp hơn • chất lượng tài sản cao'},
+      {code:'DXG', x:33, y:54, size:54, cls:'dxg', tip:'DXG • beta cao hơn • đòn bẩy trung bình'},
+      {code:'NVL', x:40, y:26, size:66, cls:'nvl', tip:'NVL • upside lớn nhưng rủi ro bảng cân đối cao'}
+    ];
+
+    function buildLineChart(svgId, seriesKey){
+      const svg = document.getElementById(svgId); if(!svg) return;
+      const s = financialSeries[seriesKey];
+      const w=760,h=330,p={l:58,r:18,t:22,b:48};
+      const cw=w-p.l-p.r, ch=h-p.t-p.b;
+      const vals=s.values, min=Math.min(...vals), max=Math.max(...vals);
+      const pad=(max-min)*0.18 || max*0.15 || 1;
+      const lo=Math.max(0,min-pad), hi=max+pad;
+      const x=i => p.l + (cw/(vals.length-1||1))*i;
+      const y=v => p.t + ch - ((v-lo)/(hi-lo))*ch;
+      let html='';
+      for(let i=0;i<4;i++){
+        const gv=lo+(hi-lo)*(i/3), gy=y(gv);
+        html += `<line x1="${p.l}" y1="${gy}" x2="${w-p.r}" y2="${gy}" stroke="var(--line)" stroke-width="1" stroke-dasharray="4 5"/>`;
+        html += `<text x="10" y="${gy+4}" font-size="12" fill="var(--muted)">${gv.toFixed(seriesKey==='margin'||seriesKey==='liquidity'?1:0).replace('.',',')}</text>`;
+      }
+      html += `<line x1="${p.l}" y1="${h-p.b}" x2="${w-p.r}" y2="${h-p.b}" stroke="var(--line)" stroke-width="1.4"/>`;
+      html += `<line x1="${p.l}" y1="${p.t}" x2="${p.l}" y2="${h-p.b}" stroke="var(--line)" stroke-width="1.4"/>`;
+      const points = vals.map((v,i)=>`${x(i)},${y(v)}`).join(' ');
+      if(s.area){
+        html += `<path d="M ${x(0)} ${h-p.b} L ${points.replace(/ /g,' L ')} L ${x(vals.length-1)} ${h-p.b} Z" fill="color-mix(in srgb, ${s.color} 20%, transparent)"/>`;
+      }
+      html += `<polyline points="${points}" fill="none" stroke="${getComputedStyle(document.body).getPropertyValue(s.color.replace('var(','').replace(')',''))||'currentColor'}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`;
+      vals.forEach((v,i)=>{
+        html += `<circle cx="${x(i)}" cy="${y(v)}" r="6" fill="${getCssVar(s.color)}" stroke="var(--panel)" stroke-width="3"/>`;
+        html += `<text x="${x(i)}" y="${y(v)-14}" text-anchor="middle" font-size="12" font-weight="700" fill="var(--text)">${(seriesKey==='margin'||seriesKey==='liquidity'?v.toFixed(1).replace('.',','):new Intl.NumberFormat('vi-VN').format(v))}</text>`;
+        html += `<text x="${x(i)}" y="${h-20}" text-anchor="middle" font-size="12" fill="var(--muted)">${s.years[i]}</text>`;
+      });
+      html += `<text x="${w/2}" y="18" text-anchor="middle" font-size="13" font-weight="700" fill="var(--muted)">${s.label}</text>`;
+      svg.innerHTML = html;
+      document.getElementById('finHeadline').textContent = s.notes[0];
+      document.getElementById('finMonitor').textContent = s.notes[1];
+      document.getElementById('finImplication').textContent = s.notes[2];
+    }
+
+    function getCssVar(v){
+      if(!v.startsWith('var(')) return v;
+      const key=v.slice(4,-1);
+      return getComputedStyle(document.body).getPropertyValue(key).trim();
+    }
+
+    function buildTargetChart(){
+      const svg = document.getElementById('targetSvg'); if(!svg) return;
+      const discount = +document.getElementById('discountSlider').value;
+      const rnav = 50000;
+      const implied = rnav * (1 - discount/100);
+      document.getElementById('discountOut').textContent = discount + '%';
+      document.getElementById('rnavShareOut').textContent = fmt(rnav);
+      document.getElementById('impliedTarget').textContent = fmt(implied);
+      const items = [['Thị giá', marketPrice], ['Target nội bộ', implied], ...brokerTargets];
+      const max = Math.max(...items.map(x=>x[1]))*1.08;
+      const w=520,h=330,p={l:120,r:20,t:18,b:22};
+      const ch=h-p.t-p.b, bw=Math.min(24, ch/items.length-8);
+      let html='';
+      items.forEach((it,i)=>{
+        const y = p.t + i*(ch/items.length) + 6;
+        const len = (it[1]/max)*(w-p.l-p.r);
+        let fill = 'var(--line)';
+        if(i===0) fill = 'var(--text)';
+        else if(i===1) fill = 'var(--primary)';
+        else fill = 'var(--green)';
+        html += `<text x="10" y="${y+bw-5}" font-size="12" fill="var(--muted)">${it[0]}</text>`;
+        html += `<rect x="${p.l}" y="${y}" width="${len}" height="${bw}" rx="10" fill="${getCssVar(fill)}" opacity="${i===0?0.8:0.92}"/>`;
+        html += `<text x="${p.l+len+8}" y="${y+bw-5}" font-size="12" font-weight="700" fill="var(--text)">${fmt(it[1])}</text>`;
+      });
+      svg.innerHTML = html;
+    }
+
+    function buildScenarioChart(active='bear'){
+      const svg = document.getElementById('scenarioSvg'); if(!svg) return;
+      const entries = [['Bear',30000,'var(--red)'],['Base',36000,'var(--primary)'],['Bull',42000,'var(--green)']];
+      const max=46000,w=600,h=260,p={l:48,r:18,t:20,b:44}, cw=w-p.l-p.r, ch=h-p.t-p.b;
+      let html='';
+      html += `<line x1="${p.l}" y1="${h-p.b}" x2="${w-p.r}" y2="${h-p.b}" stroke="var(--line)" stroke-width="1.4"/>`;
+      html += `<line x1="${p.l}" y1="${p.t}" x2="${p.l}" y2="${h-p.b}" stroke="var(--line)" stroke-width="1.4"/>`;
+      [0,10000,20000,30000,40000].forEach(v=>{
+        const yy = p.t + ch - (v/max)*ch;
+        html += `<line x1="${p.l}" y1="${yy}" x2="${w-p.r}" y2="${yy}" stroke="var(--line)" stroke-width="1" stroke-dasharray="4 5"/>`;
+        html += `<text x="8" y="${yy+4}" font-size="12" fill="var(--muted)">${(v/1000).toFixed(0)}k</text>`;
+      });
+      entries.forEach((e,i)=>{
+        const x = p.l + 70 + i*160;
+        const barH = (e[1]/max)*ch;
+        const y = h-p.b-barH;
+        const activeBoost = active.toLowerCase()===e[0].toLowerCase() ? 1 : 0.78;
+        html += `<rect x="${x}" y="${y}" width="84" height="${barH}" rx="18" fill="${getCssVar(e[2])}" opacity="${activeBoost}"/>`;
+        html += `<text x="${x+42}" y="${y-10}" text-anchor="middle" font-size="12" font-weight="700" fill="var(--text)">${(e[1]/1000).toFixed(0)}k</text>`;
+        html += `<text x="${x+42}" y="${h-18}" text-anchor="middle" font-size="12" fill="var(--muted)">${e[0]}</text>`;
+      });
+      svg.innerHTML = html;
+    }
+
+    function setScenario(key){
+      document.querySelectorAll('.scenario-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.s === key));
+      const s = scenarios[key];
+      document.getElementById('scTarget').textContent = fmt(s.target);
+      document.getElementById('scRnav').textContent = fmt(s.rnav);
+      document.getElementById('scUpside').textContent = s.upside;
+      document.getElementById('scNote').textContent = s.note;
+      if(key==='bear'){
+        document.getElementById('targetPrice').textContent = fmt(30000);
+        document.getElementById('upsidePct').textContent = '+4,3%';
+        document.getElementById('upsidePct').className = 'n flat';
+      } else if(key==='base'){
+        document.getElementById('targetPrice').textContent = fmt(36000);
+        document.getElementById('upsidePct').textContent = '+25,2%';
+        document.getElementById('upsidePct').className = 'n up';
+      } else {
+        document.getElementById('targetPrice').textContent = fmt(42000);
+        document.getElementById('upsidePct').textContent = '+46,1%';
+        document.getElementById('upsidePct').className = 'n up';
+      }
+      buildScenarioChart(key);
+    }
+
+    function buildPeerMap(){
+      const box = document.getElementById('peerMap'); if(!box) return;
+      box.querySelectorAll('.bubble').forEach(el=>el.remove());
+      const tip = document.getElementById('bubbleTip');
+      const width = box.clientWidth, height = box.clientHeight;
+      const left=54, right=18, top=18, bottom=42, cw=width-left-right, ch=height-top-bottom;
+      peerData.forEach(p=>{
+        const el = document.createElement('div');
+        el.className = 'bubble ' + p.cls;
+        el.style.width = p.size+'px';
+        el.style.height = p.size+'px';
+        el.style.left = (left + (p.x/45)*cw - p.size/2) + 'px';
+        el.style.top = (top + ((100-p.y)/100)*ch - p.size/2) + 'px';
+        el.textContent = p.code;
+        el.onmouseenter = () => { tip.textContent = p.tip; tip.style.opacity = '1'; tip.style.left = (parseFloat(el.style.left)+p.size+10)+'px'; tip.style.top = (parseFloat(el.style.top)-4)+'px'; tip.style.transform = 'translateY(0)'; };
+        el.onmouseleave = () => { tip.style.opacity = '0'; tip.style.transform = 'translateY(6px)'; };
+        box.appendChild(el);
+      });
+    }
+
+    function toggleTheme(){
+      document.body.classList.toggle('dark');
+      localStorage.setItem('nlg_theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+      const activeMetric = document.querySelector('#metricTabs button.active')?.dataset.metric || 'revenue';
+      buildLineChart('financialSvg', activeMetric);
+      buildTargetChart();
+      buildScenarioChart(document.querySelector('.scenario-btn.active')?.dataset.s || 'bear');
+      buildPeerMap();
+    }
+
+    if(localStorage.getItem('nlg_theme')==='dark') document.body.classList.add('dark');
+
+    document.querySelectorAll('#metricTabs button').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        document.querySelectorAll('#metricTabs button').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        buildLineChart('financialSvg', btn.dataset.metric);
+      });
+    });
+    document.getElementById('discountSlider')?.addEventListener('input', buildTargetChart);
+    window.addEventListener('resize', buildPeerMap);
+
+    buildLineChart('financialSvg','revenue');
+    buildTargetChart();
+    setScenario('bear');
+    buildPeerMap();
+  </script>
+
+
+<!-- Disclaimer -->
+<div class="card">
+<div style="
+    margin-top:50px;
+    padding:25px;
+    background:#f8fafc;
+    border-radius:14px;
+    border:1px solid #e5e7eb;
+">
+    <h3 style="margin-bottom:12px; color:#111827;">
+        Disclaimer
+    </h3>
+
+    <p style="font-size:13px; line-height:1.6; color:#374151; margin-bottom:10px;">
+        Báo cáo này được thực hiện nhằm mục đích cung cấp thông tin tham khảo cho nhà đầu tư và không phải là lời khuyên mua, bán hoặc nắm giữ bất kỳ chứng khoán nào. 
+    </p>
+	
+	<p style="font-size:13px; line-height:1.6; color:#374151; margin-bottom:10px;">
+        Các nhận định và đánh giá trong báo cáo được xây dựng dựa trên các nguồn thông tin được cho là đáng tin cậy tại thời điểm công bố.
+    </p>
+
+    <p style="font-size:13px; line-height:1.6; color:#374151; margin-bottom:10px;">
+        Tuy nhiên, chúng tôi không đảm bảo tính đầy đủ, chính xác hoặc cập nhật của các thông tin này. Quan điểm trong báo cáo có thể thay đổi mà không cần thông báo trước tùy theo diễn biến thị trường và điều kiện kinh tế vĩ mô.
+    </p>
+
+    <p style="font-size:13px; line-height:1.6; color:#374151; margin-bottom:10px;">
+        Nhà đầu tư cần tự chịu trách nhiệm đối với các quyết định đầu tư của mình và nên xem xét tình hình tài chính cá nhân cũng như tham khảo ý kiến từ các chuyên gia tài chính độc lập trước khi đưa ra quyết định.
+    </p>
+
+    <p style="font-size:13px; line-height:1.6; color:#374151;">
+        Báo cáo này không được phép sao chép, phân phối hoặc công bố dưới bất kỳ hình thức nào nếu không có sự đồng ý trước bằng văn bản của đơn vị phát hành.
+    </p>
+</div>
+</div>
+
+<!-- Analyst Info -->
+
+<div class="card">
+<div style="
+    margin-top:20px;
+    padding:10px;
+    background:#ffffff;
+    border-radius:14px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.05);
+    border-left:6px solid #2563eb;
+">
+    <h3 style="margin:0 0 10px 0; color:#2563eb;">
+        Người thực hiện
+    </h3>
+
+    <p style="margin:5px 0; font-weight:600; font-size:16px;">
+        Nguyễn Long Hoàng
+    </p>
+
+    <p style="margin:5px 0; color:#374151;">
+        Chứng khoán Phú Hưng
+    </p>
+
+    <p style="margin:5px 0;">
+        📞 Contact: 
+        <a href="tel:0982100812" style="color:#16a34a; font-weight:600;">
+            098.2100.812
+        </a>
+    </p>
+</div>
+</div>
+
+
+
+</body>
+</html>
